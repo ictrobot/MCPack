@@ -1,0 +1,23 @@
+group 'ethanjones'
+version '1.0-SNAPSHOT'
+
+apply plugin: 'java'
+
+sourceCompatibility = 1.7
+
+sourceSets.main.java.srcDirs = ["src/"]
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+
+}
+
+jar {
+    jar.archiveName = "mcpack.jar"
+    manifest {
+        attributes 'Main-Class': "ethanjones.mcpack.MCPack"
+    }
+}
