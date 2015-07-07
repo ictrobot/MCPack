@@ -3,7 +3,6 @@ package ethanjones.mcpack;
 import ethanjones.data.Data;
 import ethanjones.data.DataGroup;
 import ethanjones.util.FileUtil;
-import ethanjones.util.HashUtil;
 import ethanjones.util.Version;
 
 import java.io.File;
@@ -89,7 +88,7 @@ public class Updater extends Thread {
 
             File local = new File(workingFolder, rel);
             if (local.exists()) {
-                String hash = HashUtil.hashFile(local);
+                String hash = FileUtil.hashFile(local);
                 String remoteHash = (String) entry.getValue();
                 if (!hash.equals(remoteHash)) {
                     MCPack.log("Hash of file " + rel + " has changed");
@@ -124,7 +123,7 @@ public class Updater extends Thread {
             }
         } else {
             if (dataGroup.containsKey(rel)) {
-                String hash = HashUtil.hashFile(file);
+                String hash = FileUtil.hashFile(file);
                 String remoteHash = dataGroup.getString(rel);
                 if (!hash.equals(remoteHash)) {
                     MCPack.log("Hash of file " + rel + " has changed");

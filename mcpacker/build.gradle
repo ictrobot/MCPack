@@ -1,0 +1,11 @@
+sourceCompatibility = 1.7
+
+sourceSets.main.java.srcDirs = ["src/"]
+
+jar {
+    from { configurations.compile.collect { zipTree(it) } }
+    jar.archiveName = "mcpacker.jar"
+    manifest {
+        attributes 'Main-Class': "ethanjones.mcpacker.MCPacker"
+    }
+}

@@ -1,0 +1,7 @@
+sourceCompatibility = 1.7
+
+sourceSets.main.java.srcDirs = ["src/"]
+
+jar {
+    jar.archiveName = "mcpack-base.jar"
+}

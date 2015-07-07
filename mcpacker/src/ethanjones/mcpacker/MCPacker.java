@@ -2,7 +2,6 @@ package ethanjones.mcpacker;
 
 import ethanjones.data.Data;
 import ethanjones.util.FileUtil;
-import ethanjones.util.HashUtil;
 import ethanjones.data.DataGroup;
 import ethanjones.util.Version;
 
@@ -56,7 +55,7 @@ public class MCPacker {
         DataGroup otherFilesGroup = main.getGroup("otherFiles");
         for (File otherFile : otherFiles) {
             String rel = getRelative(otherFile);
-            otherFilesGroup.put(rel, HashUtil.hashFile(otherFile));
+            otherFilesGroup.put(rel, FileUtil.hashFile(otherFile));
 
             File out = new File(outputFilesFolder, rel);
             new File(out.getParent()).mkdirs();
@@ -71,7 +70,7 @@ public class MCPacker {
 
             for (File file : entry.getValue()) {
                 String fileRel = getRelative(file);
-                dataGroup.put(fileRel, HashUtil.hashFile(file));
+                dataGroup.put(fileRel, FileUtil.hashFile(file));
 
                 File out = new File(outputFilesFolder, fileRel);
                 new File(out.getParent()).mkdirs();
