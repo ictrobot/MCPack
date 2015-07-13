@@ -1,6 +1,7 @@
 package ethanjones.mcpacker;
 
 import ethanjones.data.Data;
+import ethanjones.data.DataFormatter;
 import ethanjones.util.FileUtil;
 import ethanjones.data.DataGroup;
 import ethanjones.util.Version;
@@ -78,7 +79,8 @@ public class MCPacker {
             }
         }
 
-        System.out.println(main.toString());
+        System.out.println();
+        System.out.println(DataFormatter.str(main));
         try {
             Data.output(main, new File(outputFolder, "data"));
         } catch (IOException e) {

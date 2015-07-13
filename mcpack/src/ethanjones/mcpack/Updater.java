@@ -2,6 +2,7 @@ package ethanjones.mcpack;
 
 import ethanjones.data.Data;
 import ethanjones.data.DataGroup;
+import ethanjones.data.DataFormatter;
 import ethanjones.util.FileUtil;
 import ethanjones.util.Version;
 
@@ -43,7 +44,9 @@ public class Updater extends Thread {
             MCPack.log(e);
             return;
         }
-        MCPack.log("Opened data");
+        MCPack.log("Opened data\n");
+        MCPack.log(DataFormatter.str(dataGroup));
+        MCPack.log("\n");
 
         int versionCode = dataGroup.getInteger("version");
         if (versionCode != Version.versionCode) {
