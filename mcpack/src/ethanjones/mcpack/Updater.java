@@ -34,7 +34,7 @@ public class Updater extends Thread {
         MCPack.log("Local folder " + workingFolder.getAbsolutePath());
         MCPack.log("Remote " + config.remote);
 
-        if (!download(config.remote + "/data", temp + "/data")) return;
+        if (!Fetch.fetch(config.remote + "/data", temp + "/data")) return;
 
         MCPack.log("Opening data");
         DataGroup dataGroup;
@@ -78,7 +78,7 @@ public class Updater extends Thread {
 
             for (Map.Entry<String, Object> e : d.entrySet()) {
                 MCPack.log("File " + e.getKey() + " does not exist locally");
-                if (!download(e.getKey())) return;
+                if (!fetch(e.getKey())) return;
             }
             MCPack.log("Finished checking " + entry.getKey());
         }
@@ -95,13 +95,13 @@ public class Updater extends Thread {
                 String remoteHash = (String) entry.getValue();
                 if (!hash.equals(remoteHash)) {
                     MCPack.log("Hash of file " + rel + " has changed");
-                    if (!download(rel)) return;
+                    if (!fetch(rel)) return;
                 } else {
                     MCPack.log("Hash of file " + rel + " matches remote");
                 }
             } else {
                 MCPack.log("File " + rel + " does not exist locally");
-                if (!download(rel)) return;
+                if (!fetch(rel)) return;
             }
         }
         MCPack.log("Finished checking other files");
@@ -130,7 +130,7 @@ public class Updater extends Thread {
                 String remoteHash = dataGroup.getString(rel);
                 if (!hash.equals(remoteHash)) {
                     MCPack.log("Hash of file " + rel + " has changed");
-                    if (!download(rel)) return false;
+                    if (!fetch(rel)) return false;
                 } else {
                     MCPack.log("Hash of file " + rel + " matches remote");
                 }
@@ -143,27 +143,8 @@ public class Updater extends Thread {
         return true;
     }
 
-    public boolean download(String rel) {
-        return download(config.remote + "/files/" + rel, config.local + rel);
-    }
-
-    public boolean download(String remote, String local) {
-        try {
-            MCPack.log("Downloading " + remote + " to " + local);
-
-            FileUtil.delete(new File(local));
-            new File(local).createNewFile();
-
-            URL url = new URL(remote);
-            Files.copy(url.openStream(), new File(local).toPath(), StandardCopyOption.REPLACE_EXISTING);
-
-            MCPack.log("Downloaded " + remote);
-        } catch (Exception e) {
-            MCPack.log("Failed to download");
-            MCPack.log(e);
-            return false;
-        }
-        return true;
+    public boolean fetch(String rel) {
+        return Fetch.fetch(config.remote + "/files/" + rel, config.local + rel);
     }
 
     public String getRelative(File file) {
