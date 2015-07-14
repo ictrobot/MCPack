@@ -189,7 +189,7 @@ public abstract class DataInterpreter<T> {
       output(obj, output, interpreter);
     }
 
-    private void output(Object obj, DataOutput output, DataInterpreter interpreter) throws IOException{
+    private void output(Object obj, DataOutput output, DataInterpreter interpreter) throws IOException {
       if (obj.getClass().isArray()) {
         Object[] array = (Object[]) obj;
         if (obj.getClass().getComponentType().isArray()) {
@@ -204,7 +204,6 @@ public abstract class DataInterpreter<T> {
         interpreter.output(obj, output);
       }
     }
-
 
 
     @Override
@@ -455,7 +454,8 @@ public abstract class DataInterpreter<T> {
 
   private static final class End {
 
-    private End() {}
+    private End() {
+    }
 
   }
 
