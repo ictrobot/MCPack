@@ -6,12 +6,12 @@ import java.io.StringWriter;
 
 public class MCPack {
 
-    public static final Config config = new Config();
-    public static Window window;
+    public static final MCPackConfig config = new MCPackConfig();
+    public static MCPackWindow window;
 
     public static void main(String[] args) {
         config.read();
-        window = new Window();
+        window = new MCPackWindow();
     }
 
     public static void log(String str) {

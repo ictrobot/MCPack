@@ -1,14 +1,14 @@
 package ethanjones.mcpack;
 
 
-import ethanjones.util.FileUtil;
+import ethanjones.mcpack.util.FileUtil;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.util.Properties;
 
-public class Config {
+public class MCPackConfig {
     private static String filename = System.getProperty("user.home") + "/.mcpack";
     private static File file = new File(filename);
 
@@ -61,8 +61,8 @@ public class Config {
 
     }
 
-    public Config copy() {
-        Config config = new Config();
+    public MCPackConfig copy() {
+        MCPackConfig config = new MCPackConfig();
         config.local = this.local;
         config.remote = this.remote;
         return config;

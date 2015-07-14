@@ -1,4 +1,4 @@
-package ethanjones.util;
+package ethanjones.mcpack.util;
 
 import java.io.File;
 import java.io.FileInputStream;

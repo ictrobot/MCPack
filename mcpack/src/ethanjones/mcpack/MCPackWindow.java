@@ -1,12 +1,12 @@
 package ethanjones.mcpack;
 
-import ethanjones.util.Version;
+import ethanjones.mcpack.util.Version;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public class Window extends Frame {
+public class MCPackWindow extends Frame {
     private Label labelLocal;
     private Label labelRemote;
     private Label labelStatus;
@@ -18,9 +18,9 @@ public class Window extends Frame {
     private TextArea console;
     private String consoleText = "";
 
-    private Window window;
+    private MCPackWindow window;
 
-    public Window() {
+    public MCPackWindow() {
         window = this;
 
         setLayout(null);
@@ -62,7 +62,7 @@ public class Window extends Frame {
 
                 updateConfig();
 
-                new Updater(MCPack.config.copy()).start();
+                new MCPackUpdater(MCPack.config.copy()).start();
             }
         });
         add(buttonUpdate);
@@ -94,6 +94,7 @@ public class Window extends Frame {
     }
 
     public void setStatus(String str) {
+        MCPack.log(str);
         if (labelStatus != null) labelStatus.setText(str);
     }
 
