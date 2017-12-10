@@ -6,6 +6,7 @@ import ethanjones.data.DataGroup;
 import ethanjones.mcpack.util.FileUtil;
 import ethanjones.mcpack.util.Version;
 
+import javax.swing.*;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -56,6 +57,10 @@ public class MCPackUpdater extends Thread {
       MCPack.log("MCPack version matches");
     }
     MCPack.log("");
+
+    File mmcpack = new File(workingFolder, "mmc-pack.json");
+    String mmcpackhash = mmcpack.exists() ? FileUtil.hashFile(mmcpack) : "";
+    if (mmcpack.exists()) setMMCPackWritable(false);
 
     DataGroup managedGroup = dataGroup.getGroup("managed");
     for (Map.Entry<String, Object> entry : managedGroup.entrySet()) {
@@ -113,6 +118,20 @@ public class MCPackUpdater extends Thread {
       MCPack.log("");
     }
 
+    if (mmcpack.exists()) {
+      String newMmcpackHash = FileUtil.hashFile(mmcpack);
+      MCPack.log("mmc-pack.json old hash " + mmcpackhash);
+      MCPack.log("mmc-pack.json new hash " + newMmcpackHash);
+      if (!newMmcpackHash.equals(mmcpackhash)) {
+        MCPack.log("Restart needed");
+
+        MCPack.window.setStatus("Restart MultiMC Instance");
+        JOptionPane.showMessageDialog(null, "Please restart your MultiMC instance");
+        System.exit(11);
+        return;
+      }
+    }
+
     MCPack.window.setStatus("Successfully updated");
     MCPack.window.addExit();
   }
@@ -160,7 +179,20 @@ public class MCPackUpdater extends Thread {
       return true;
     }
 
-    return MCPackFetch.fetch(config.remote + "/files/" + hash, config.local + rel);
+    if (rel.equals("mmc-pack.json")) setMMCPackWritable(true);
+    boolean f = MCPackFetch.fetch(config.remote + "/files/" + hash, config.local + rel);
+    if (rel.equals("mmc-pack.json")) setMMCPackWritable(false);
+    return f;
+  }
+
+  private void setMMCPackWritable(boolean writable) {
+    try {
+      MCPack.log("Making mmc-pack.json read only");
+      if (!new File(workingFolder, "mmc-pack.json").setWritable(writable)) throw new RuntimeException("Failed");
+    } catch (Exception e) {
+      MCPack.log("Failed making mmc-pack.json read only");
+      e.printStackTrace();
+    }
   }
 
   public String getRelative(File file) {
