@@ -58,6 +58,10 @@ public class MCPackUpdater extends Thread {
     }
     MCPack.log("");
 
+    // use minecraft/ not .minecraft/
+    File dotMinecraft = new File(workingFolder, ".minecraft");
+    FileUtil.delete(dotMinecraft);
+
     File mmcpack = new File(workingFolder, "mmc-pack.json");
     String mmcpackhash = mmcpack.exists() ? FileUtil.hashFile(mmcpack) : "";
     if (mmcpack.exists()) setMMCPackWritable(false);
