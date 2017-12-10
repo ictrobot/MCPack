@@ -1,17 +1,50 @@
 package ethanjones.mcpack;
 
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
+import java.io.*;
+import java.util.Properties;
 
 public class MCPack {
 
   public static final MCPackConfig config = new MCPackConfig();
   public static MCPackWindow window;
 
+  public static boolean script = false;
+
   public static void main(String[] args) {
-    config.read();
+    if (args.length == 0) {
+      config.read();
+      script = false;
+    } else if (args.length == 1) {
+      try {
+        config.local = args[0];
+        config.remote = getRemote(new File(args[0]));
+        script = true;
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    } else {
+      config.local = args[0];
+      config.remote = args[1];
+      script = true;
+    }
     window = new MCPackWindow();
+  }
+
+  private static String getRemote(File local) {
+    try {
+      File file = new File(local, "mcpack.properties");
+      FileInputStream fileInput = new FileInputStream(file);
+      Properties properties = new Properties();
+      properties.load(fileInput);
+      fileInput.close();
+
+      String remote = properties.getProperty("remote", null);
+      if (remote == null || remote.isEmpty()) throw new RuntimeException("No remote defined");
+      return remote;
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public static void log(String str) {
@@ -23,8 +56,8 @@ public class MCPack {
     e.printStackTrace();
     if (window != null) {
       window.log(getStackTrace(e));
-      window.addExit();
       window.setStatus("Update failed");
+      MCPack.window.addExit();
     }
   }
 

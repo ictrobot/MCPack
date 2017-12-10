@@ -55,14 +55,7 @@ public class MCPackWindow extends Frame {
     buttonUpdate.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        MCPack.log("Updating");
-        setStatus("Updating");
-
-        window.remove(buttonExit);
-
-        updateConfig();
-
-        new MCPackUpdater(MCPack.config.copy()).start();
+        startUpdate();
       }
     });
     add(buttonUpdate);
@@ -72,11 +65,7 @@ public class MCPackWindow extends Frame {
     buttonExit.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        MCPack.log("Exiting");
-
-        updateConfig();
-
-        System.exit(0);
+        exit();
       }
     });
     add(buttonExit);
@@ -86,6 +75,30 @@ public class MCPackWindow extends Frame {
     add(console);
 
     setVisible(true);
+
+    if (MCPack.script) {
+      window.remove(buttonUpdate);
+      startUpdate();
+    }
+  }
+
+  private void startUpdate() {
+    MCPack.log("Updating");
+    setStatus("Updating");
+
+    window.remove(buttonExit);
+
+    updateConfig();
+
+    new MCPackUpdater(MCPack.config.copy()).start();
+  }
+
+  private void exit() {
+    MCPack.log("Exiting");
+
+    updateConfig();
+
+    System.exit(0);
   }
 
   public void log(String str) {
@@ -100,6 +113,10 @@ public class MCPackWindow extends Frame {
 
   public void addExit() {
     add(buttonExit);
+
+    if (MCPack.script && labelStatus.getText().toLowerCase().contains("success")) {
+      exit();
+    }
   }
 
   private void updateConfig() {

@@ -17,11 +17,13 @@ public class MCPackUpdater extends Thread {
 
   private final MCPackConfig config;
   private final File workingFolder;
+  private final IgnoreList ignoreList;
 
   public MCPackUpdater(MCPackConfig config) {
     config.local = config.local + "/";
     this.config = config;
     this.workingFolder = new File(config.local);
+    this.ignoreList = new IgnoreList(workingFolder);
   }
 
   @Override
@@ -47,8 +49,8 @@ public class MCPackUpdater extends Thread {
     int versionCode = dataGroup.getInteger("version");
     if (versionCode != Version.versionCode) {
       MCPack.log("Please update MCPack to version " + versionCode);
-      MCPack.window.addExit();
       MCPack.window.setStatus("Please update MCPack to version " + versionCode);
+      MCPack.window.addExit();
       return;
     } else {
       MCPack.log("MCPack version matches");
@@ -59,6 +61,12 @@ public class MCPackUpdater extends Thread {
     for (Map.Entry<String, Object> entry : managedGroup.entrySet()) {
       String rel = entry.getKey();
       File local = new File(workingFolder, rel);
+
+      if (ignoreList.ignore(rel)) {
+        MCPack.log("IGNORING " + rel);
+        continue;
+      }
+
       Object o = entry.getValue();
       if (o == (Integer) 0) {
         if (local.exists() && local.isDirectory()) {
@@ -105,12 +113,16 @@ public class MCPackUpdater extends Thread {
       MCPack.log("");
     }
 
-    MCPack.window.addExit();
     MCPack.window.setStatus("Successfully updated");
+    MCPack.window.addExit();
   }
 
   public boolean check(File file, ArrayList folders, DataGroup files, File managedFolder) {
     String rel = getRelative(file);
+    if (ignoreList.ignore(rel)) {
+      MCPack.log("IGNORING " + rel);
+      return true;
+    }
 
     if (file.isDirectory()) {
       if (!folders.contains(rel) && file != managedFolder) {
@@ -143,6 +155,11 @@ public class MCPackUpdater extends Thread {
   }
 
   public boolean fetch(String hash, String rel) {
+    if (ignoreList.ignore(rel)) {
+      MCPack.log("IGNORING " + rel);
+      return true;
+    }
+
     return MCPackFetch.fetch(config.remote + "/files/" + hash, config.local + rel);
   }
 
