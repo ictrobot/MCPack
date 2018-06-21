@@ -155,6 +155,7 @@ public class MCPackerUpdater extends Thread {
   }
 
   private void loop(File file, File managedFolder) {
+    if (file.getAbsolutePath().contains(".git")) return;
     if (file.isDirectory() && managed.containsKey(file)) {
       managedFolder = file;
     } else if (file != inputFolder) {

@@ -81,6 +81,7 @@ public class MCPackerWindow extends Frame {
     buttonUpdate.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
+        consoleText = "";
         MCPacker.log("Updating");
         setStatus("Updating");
 
@@ -116,7 +117,10 @@ public class MCPackerWindow extends Frame {
 
   public void log(String str) {
     consoleText = consoleText + str + "\n";
-    if (console != null) console.setText(consoleText);
+    if (console != null) {
+      console.setText(consoleText);
+      console.setCaretPosition(consoleText.length());
+    }
   }
 
   public void setStatus(String str) {
