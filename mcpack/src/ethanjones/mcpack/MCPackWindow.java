@@ -7,6 +7,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class MCPackWindow extends Frame {
+
   private Label labelLocal;
   private Label labelRemote;
   private Label labelStatus;
@@ -14,6 +15,7 @@ public class MCPackWindow extends Frame {
   private TextField textFieldRemote;
   private Button buttonUpdate;
   private Button buttonExit;
+  private volatile boolean failed = false;
 
   private TextArea console;
   private String consoleText = "";
@@ -83,6 +85,8 @@ public class MCPackWindow extends Frame {
   }
 
   private void startUpdate() {
+    failed = false;
+    consoleText = "";
     MCPack.log("Updating");
     setStatus("Updating");
 
@@ -98,12 +102,19 @@ public class MCPackWindow extends Frame {
 
     updateConfig();
 
-    System.exit(0);
+    if (failed) {
+      System.exit(10);
+    } else {
+      System.exit(0);
+    }
   }
 
   public void log(String str) {
     consoleText = consoleText + str + "\n";
-    if (console != null) console.setText(consoleText);
+    if (console != null) {
+      console.setText(consoleText);
+      console.setCaretPosition(consoleText.length());
+    }
   }
 
   public void setStatus(String str) {
@@ -123,5 +134,9 @@ public class MCPackWindow extends Frame {
     MCPack.config.local = textFieldLocal.getText();
     MCPack.config.remote = textFieldRemote.getText();
     MCPack.config.write();
+  }
+
+  public void setFailed() {
+    this.failed = true;
   }
 }

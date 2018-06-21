@@ -55,6 +55,7 @@ public class MCPack {
   public static void log(Exception e) {
     e.printStackTrace();
     if (window != null) {
+      window.setFailed();
       window.log(getStackTrace(e));
       window.setStatus("Update failed");
       MCPack.window.addExit();
