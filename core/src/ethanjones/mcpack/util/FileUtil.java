@@ -38,7 +38,7 @@ public class FileUtil {
     try (FileInputStream inputStream = new FileInputStream(file)) {
       MessageDigest digest = MessageDigest.getInstance(algorithm);
 
-      byte[] bytesBuffer = new byte[1024];
+      byte[] bytesBuffer = new byte[131072];
       int bytesRead = -1;
 
       while ((bytesRead = inputStream.read(bytesBuffer)) != -1) {
