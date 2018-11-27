@@ -58,7 +58,7 @@ public class MCPack {
       window.setFailed();
       window.log(getStackTrace(e));
       window.setStatus("Update failed");
-      MCPack.window.addExit();
+      MCPack.window.enableExit();
     }
   }
 

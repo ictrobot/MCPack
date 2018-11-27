@@ -2,95 +2,111 @@ package ethanjones.mcpack;
 
 import ethanjones.mcpack.util.Version;
 
+import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
-public class MCPackWindow extends Frame {
+public class MCPackWindow extends JFrame {
 
-  private Label labelLocal;
-  private Label labelRemote;
-  private Label labelStatus;
-  private TextField textFieldLocal;
-  private TextField textFieldRemote;
-  private Button buttonUpdate;
-  private Button buttonExit;
+  private JLabel labelStatus;
+  private JTextField textFieldLocal;
+  private JTextField textFieldRemote;
   private volatile boolean failed = false;
+  private volatile boolean canExit = true;
 
-  private TextArea console;
   private String consoleText = "";
+  private JTextArea console;
 
-  private MCPackWindow window;
+  private boolean showingTable = true;
+  private JScrollPane tableView;
+  private JScrollPane logView;
 
   public MCPackWindow() {
-    window = this;
+    setLayout(new BorderLayout());
+    setResizable(true);
+    setSize(800,  400);
+    setTitle("MCPack - version " + Version.versionString);
 
-    setLayout(null);
-    setResizable(false);
-    setSize(700, 400);
-    setTitle("MCPack - version " + Version.versionCode);
+    add(makeConfigPanel(), BorderLayout.NORTH);
+    add(makeActionPanel(), BorderLayout.SOUTH);
 
-    labelLocal = new Label("Local:");
-    labelLocal.setBounds(5, 25, 50, 25);
-    add(labelLocal);
-
-    labelRemote = new Label("Remote:");
-    labelRemote.setBounds(5, 55, 50, 25);
-    add(labelRemote);
-
-    labelStatus = new Label("", Label.CENTER);
-    labelStatus.setBounds(60, 85, this.getWidth() - 120, 25);
-    add(labelStatus);
-
-    textFieldLocal = new TextField();
-    textFieldLocal.setBounds(60, 25, this.getWidth() - 65, 25);
-    textFieldLocal.setText(MCPack.config.local);
-    add(textFieldLocal);
-
-    textFieldRemote = new TextField();
-    textFieldRemote.setBounds(60, 55, this.getWidth() - 65, 25);
-    textFieldRemote.setText(MCPack.config.remote);
-    add(textFieldRemote);
-
-    buttonUpdate = new Button("Update");
-    buttonUpdate.setBounds(this.getWidth() - 55, 85, 50, 25);
-    buttonUpdate.addActionListener(new ActionListener() {
+    setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+    addWindowListener(new WindowAdapter() {
       @Override
-      public void actionPerformed(ActionEvent e) {
-        startUpdate();
+      public void windowClosing(WindowEvent e) {
+        if (canExit) exit();
       }
     });
-    add(buttonUpdate);
 
-    buttonExit = new Button("Exit");
-    buttonExit.setBounds(5, 85, 50, 25);
-    buttonExit.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        exit();
-      }
-    });
-    add(buttonExit);
+    JTable table = new JTable(UpdateData.INSTANCE);
+    table.getColumnModel().getColumn(1).setMaxWidth(200);
+    tableView = new JScrollPane(table);
+    add(tableView);
 
-    console = new TextArea(consoleText, 0, 0);
-    console.setBounds(5, 115, this.getWidth() - 10, this.getHeight() - 120);
-    add(console);
+    console = new JTextArea(consoleText);
+    logView = new JScrollPane(console);
 
     setVisible(true);
 
     if (MCPack.script) {
-      window.remove(buttonUpdate);
       startUpdate();
     }
   }
 
+  private JPanel makeConfigPanel() {
+    JPanel panel = new JPanel(new GridLayout(2, 2));
+
+    JLabel labelLocal = new JLabel("Local:");
+    panel.add(labelLocal);
+
+    JLabel labelRemote = new JLabel("Remote:");
+    panel.add(labelRemote);
+
+    textFieldLocal = new JTextField();
+    textFieldLocal.setText(MCPack.config.local);
+    panel.add(textFieldLocal);
+
+    textFieldRemote = new JTextField();
+    textFieldRemote.setText(MCPack.config.remote);
+    panel.add(textFieldRemote);
+
+    return panel;
+  }
+
+  private JPanel makeActionPanel() {
+    JPanel panel = new JPanel(new GridLayout(1, 3));
+
+    JButton consoleButton = new JButton("Show log");
+    consoleButton.addActionListener(e -> {
+      showingTable = !showingTable;
+      consoleButton.setText(showingTable ? "Show log" :  "Show table");
+      remove(showingTable ? logView : tableView);
+      add(showingTable ? tableView : logView);
+      revalidate();
+    });
+    panel.add(consoleButton);
+
+    labelStatus = new JLabel("Ready", JLabel.CENTER);
+    panel.add(labelStatus);
+
+    JButton buttonUpdate = new JButton("Update");
+    buttonUpdate.addActionListener(e -> startUpdate());
+    panel.add(buttonUpdate);
+
+    return panel;
+  }
+
   private void startUpdate() {
+    if (labelStatus.getText().equals("Updating")) return;
+
     failed = false;
     consoleText = "";
+    UpdateData.INSTANCE.resetChanges();
     MCPack.log("Updating");
     setStatus("Updating");
 
-    window.remove(buttonExit);
+    canExit = false;
 
     updateConfig();
 
@@ -122,8 +138,8 @@ public class MCPackWindow extends Frame {
     if (labelStatus != null) labelStatus.setText(str);
   }
 
-  public void addExit() {
-    add(buttonExit);
+  public void enableExit() {
+    canExit = true;
 
     if (MCPack.script && labelStatus.getText().toLowerCase().contains("success")) {
       exit();
