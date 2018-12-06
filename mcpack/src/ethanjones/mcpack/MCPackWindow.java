@@ -12,6 +12,8 @@ public class MCPackWindow extends JFrame {
   private JLabel labelStatus;
   private JTextField textFieldLocal;
   private JTextField textFieldRemote;
+  private JButton buttonUpdate;
+  private JButton buttonConsole;
   private volatile boolean failed = false;
   private volatile boolean canExit = true;
 
@@ -77,20 +79,20 @@ public class MCPackWindow extends JFrame {
   private JPanel makeActionPanel() {
     JPanel panel = new JPanel(new GridLayout(1, 3));
 
-    JButton consoleButton = new JButton("Show log");
-    consoleButton.addActionListener(e -> {
+    buttonConsole = new JButton("Show log");
+    buttonConsole.addActionListener(e -> {
       showingTable = !showingTable;
-      consoleButton.setText(showingTable ? "Show log" :  "Show table");
+      buttonConsole.setText(showingTable ? "Show log" :  "Show table");
       remove(showingTable ? logView : tableView);
       add(showingTable ? tableView : logView);
       revalidate();
     });
-    panel.add(consoleButton);
+    panel.add(buttonConsole);
 
     labelStatus = new JLabel("Ready", JLabel.CENTER);
     panel.add(labelStatus);
 
-    JButton buttonUpdate = new JButton("Update");
+    buttonUpdate = new JButton("Update");
     buttonUpdate.addActionListener(e -> startUpdate());
     panel.add(buttonUpdate);
 
@@ -142,7 +144,17 @@ public class MCPackWindow extends JFrame {
     canExit = true;
 
     if (MCPack.script && labelStatus.getText().toLowerCase().contains("success")) {
-      exit();
+      SwingUtilities.invokeLater(() -> {
+        buttonConsole.setEnabled(false);
+        buttonUpdate.setEnabled(false);
+
+        new Thread(() -> {
+          try {
+            Thread.sleep(1000);
+          } catch (InterruptedException ignored) {}
+          SwingUtilities.invokeLater(this::exit);
+        }).start();
+      });
     }
   }
 

@@ -9,7 +9,11 @@ public class MCPacker {
 
   public static void main(String[] args) {
     config.read();
-    window = new MCPackerWindow();
+    if (args.length == 1 && args[0].toLowerCase().equals("run")) {
+      new MCPackerUpdater(config.copy()).start();
+    } else {
+      window = new MCPackerWindow();
+    }
   }
 
   public static void log(String str) {
@@ -31,5 +35,14 @@ public class MCPacker {
     final PrintWriter pw = new PrintWriter(sw, true);
     throwable.printStackTrace(pw);
     return sw.getBuffer().toString();
+  }
+
+  public static void success() {
+    if (window != null) {
+      window.addExit();
+      window.setStatus("Successful");
+    } else {
+      System.exit(0);
+    }
   }
 }

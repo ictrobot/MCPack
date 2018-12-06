@@ -140,8 +140,7 @@ public class MCPackerUpdater extends Thread {
       MCPacker.log(e);
     }
 
-    MCPacker.window.addExit();
-    MCPacker.window.setStatus("Successful");
+    MCPacker.success();
   }
 
   private void copyFile(File file, String hash) {

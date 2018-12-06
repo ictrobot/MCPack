@@ -22,11 +22,7 @@ public class MCPackerWindow extends Frame {
   private TextArea console;
   private String consoleText = "";
 
-  private MCPackerWindow window;
-
   public MCPackerWindow() {
-    window = this;
-
     setLayout(null);
     setResizable(false);
     setSize(700, 500);
@@ -85,7 +81,7 @@ public class MCPackerWindow extends Frame {
         MCPacker.log("Updating");
         setStatus("Updating");
 
-        window.remove(buttonExit);
+        remove(buttonExit);
 
         updateConfig();
 
