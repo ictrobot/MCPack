@@ -15,16 +15,19 @@ import java.util.Map;
 public class MCPackUpdater extends Thread {
 
   private static final String temp = System.getProperty("java.io.tmpdir") + "/ethanjones/mcpack/";
+  private static final UpdateData ud = UpdateData.INSTANCE;
 
   private final MCPackConfig config;
   private final File workingFolder;
   private final IgnoreList ignoreList;
+  private final MCPackWorker.WorkerTask workerTask;
 
   public MCPackUpdater(MCPackConfig config) {
     config.local = config.local + "/";
     this.config = config;
     this.workingFolder = new File(config.local);
     this.ignoreList = new IgnoreList(workingFolder);
+    this.workerTask = new MCPackWorker.WorkerTask();
   }
 
   @Override
@@ -66,8 +69,6 @@ public class MCPackUpdater extends Thread {
     String mmcpackhash = mmcpack.exists() ? FileUtil.hashFile(mmcpack) : "";
     if (mmcpack.exists()) setMMCPackWritable(false);
 
-    UpdateData ud = UpdateData.INSTANCE;
-
     DataGroup managedGroup = dataGroup.getGroup("managed");
     for (Map.Entry<String, Object> entry : managedGroup.entrySet()) {
       String rel = entry.getKey();
@@ -96,39 +97,38 @@ public class MCPackUpdater extends Thread {
           }
         }
       } else if (o instanceof String) {
-        String remoteHash = (String) o;
-        if (local.exists()) {
-          String hash = FileUtil.hashFile(local);
-          if (!hash.equals(remoteHash)) {
-            MCPack.log("Hash of managed file " + rel + " has changed");
-            ud.addChange(rel, UpdateData.ChangeType.CHANGED);
-            if (!fetch(remoteHash, rel)) return;
-          } else {
-            MCPack.log("Hash of managed file " + rel + " matches remote");
-            ud.addChange(rel, UpdateData.ChangeType.MATCHES);
-          }
-        } else {
-          MCPack.log("Managed file " + rel + " does not exist locally");
-          ud.addChange(rel, UpdateData.ChangeType.ONLY_SERVER);
-          if (!fetch(remoteHash, rel)) return;
-        }
+        workerTask.addFileTask(() -> managedFile(rel, (String) o, local));
       } else {
         MCPack.log("Managed folder " + rel);
         DataGroup d = (DataGroup) entry.getValue();
         DataGroup files = d.getGroup("files");
-        if (!check(local, d.getList("folders"), files, local)) return;
-
-        if (files.size() > 0) {
-          for (Map.Entry<String, Object> e : files.entrySet()) {
-            MCPack.log("File " + e.getKey() + " does not exist locally");
-            ud.addChange(e.getKey(), UpdateData.ChangeType.ONLY_SERVER);
-            if (!fetch(((String) e.getValue()), e.getKey())) return;
+        if (!managedFolder(local, d.getList("folders"), files, local)) return;
+        workerTask.addFolderTask(() -> {
+          if (files.size() > 0) {
+            MCPack.log("Extra files exist on remote in " + rel);
+            for (Map.Entry<String, Object> e : files.entrySet()) {
+              workerTask.addFileTask(() -> {
+                MCPack.log("File " + e.getKey() + " does not exist locally");
+                ud.addChange(e.getKey(), UpdateData.ChangeType.ONLY_SERVER);
+                return fetch(((String) e.getValue()), e.getKey());
+              });
+            }
+          } else {
+            MCPack.log("No extra files exist on remote in " + rel);
           }
-        } else {
-          MCPack.log("No extra files exist on remote");
-        }
+          return true;
+        });
       }
       MCPack.log("");
+    }
+
+    MCPack.log("\nDoing work");
+    if (!workerTask.run()) {
+      MCPack.log("Work failed");
+      MCPack.log(new RuntimeException());
+      return;
+    } else {
+      MCPack.log("Done work\n");
     }
 
     if (mmcpack.exists()) {
@@ -149,7 +149,47 @@ public class MCPackUpdater extends Thread {
     MCPack.window.enableExit();
   }
 
-  public boolean check(File file, ArrayList folders, DataGroup files, File managedFolder) {
+  private boolean managedFile(String rel, String remoteHash, File local) {
+    if (local.exists()) {
+      String hash = FileUtil.hashFile(local);
+      if (!hash.equals(remoteHash)) {
+        MCPack.log("Hash of managed file " + rel + " has changed");
+        ud.addChange(rel, UpdateData.ChangeType.CHANGED);
+        return fetch(remoteHash, rel);
+      } else {
+        MCPack.log("Hash of managed file " + rel + " matches remote");
+        ud.addChange(rel, UpdateData.ChangeType.MATCHES);
+      }
+    } else {
+      MCPack.log("Managed file " + rel + " does not exist locally");
+      ud.addChange(rel, UpdateData.ChangeType.ONLY_SERVER);
+      return fetch(remoteHash, rel);
+    }
+    return true;
+  }
+
+  private boolean file(String rel, File file, DataGroup files) {
+    if (files.containsKey(rel)) {
+      String hash = FileUtil.hashFile(file);
+      String remoteHash = files.getString(rel);
+      if (!hash.equals(remoteHash)) {
+        MCPack.log("Hash of file " + rel + " has changed");
+        UpdateData.INSTANCE.addChange(rel, UpdateData.ChangeType.CHANGED);
+        if (!fetch(remoteHash, rel)) return false;
+      } else {
+        MCPack.log("Hash of file " + rel + " matches remote");
+        UpdateData.INSTANCE.addChange(rel, UpdateData.ChangeType.MATCHES);
+      }
+      files.remove(rel);
+    } else {
+      MCPack.log("File " + rel + " does not exist on remote, deleting");
+      UpdateData.INSTANCE.addChange(rel, UpdateData.ChangeType.ONLY_LOCAL);
+      FileUtil.delete(file);
+    }
+    return true;
+  }
+
+  public boolean managedFolder(File file, ArrayList folders, DataGroup files, File managedFolder) {
     String rel = getRelative(file);
     if (ignoreList.ignore(rel)) {
       MCPack.log("IGNORING " + rel);
@@ -168,27 +208,11 @@ public class MCPackUpdater extends Thread {
         }
         String[] children = file.list();
         for (String child : children) {
-          if (!check(new File(file, child), folders, files, managedFolder)) return false;
+          if (!managedFolder(new File(file, child), folders, files, managedFolder)) return false;
         }
       }
     } else {
-      if (files.containsKey(rel)) {
-        String hash = FileUtil.hashFile(file);
-        String remoteHash = files.getString(rel);
-        if (!hash.equals(remoteHash)) {
-          MCPack.log("Hash of file " + rel + " has changed");
-          UpdateData.INSTANCE.addChange(rel, UpdateData.ChangeType.CHANGED);
-          if (!fetch(remoteHash, rel)) return false;
-        } else {
-          MCPack.log("Hash of file " + rel + " matches remote");
-          UpdateData.INSTANCE.addChange(rel, UpdateData.ChangeType.MATCHES);
-        }
-        files.remove(rel);
-      } else {
-        MCPack.log("File " + rel + " does not exist on remote, deleting");
-        UpdateData.INSTANCE.addChange(rel, UpdateData.ChangeType.ONLY_LOCAL);
-        FileUtil.delete(file);
-      }
+      workerTask.addFileTask(() -> file(rel, file, files));
     }
     return true;
   }

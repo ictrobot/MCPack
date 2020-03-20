@@ -6,6 +6,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class MCPackWindow extends JFrame {
 
@@ -23,6 +24,8 @@ public class MCPackWindow extends JFrame {
   private boolean showingTable = true;
   private JScrollPane tableView;
   private JScrollPane logView;
+
+  private AtomicBoolean updateLog = new AtomicBoolean(false);
 
   public MCPackWindow() {
     setLayout(new BorderLayout());
@@ -128,10 +131,17 @@ public class MCPackWindow extends JFrame {
   }
 
   public void log(String str) {
-    consoleText = consoleText + str + "\n";
-    if (console != null) {
-      console.setText(consoleText);
-      console.setCaretPosition(consoleText.length());
+    synchronized (this) {
+      consoleText = consoleText + str + "\n";
+    }
+    if (updateLog.compareAndSet(false, true)) {
+      SwingUtilities.invokeLater(() -> {
+        synchronized (MCPackWindow.this) {
+          console.setText(consoleText);
+          console.setCaretPosition(consoleText.length());
+          updateLog.compareAndSet(true, false);
+        }
+      });
     }
   }
 

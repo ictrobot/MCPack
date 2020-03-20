@@ -129,9 +129,12 @@ public class UpdateData implements TableModel {
 
   @Override
   public Object getValueAt(int rowIndex, int columnIndex) {
-    Iterator<Entry> iterator = entries.descendingIterator();
-    for (int i = 0; i < rowIndex; i++) iterator.next();
-    Entry entry = iterator.next();
+    Entry entry;
+    synchronized (this) {
+      Iterator<Entry> iterator = entries.descendingIterator();
+      for (int i = 0; i < rowIndex; i++) iterator.next();
+      entry = iterator.next();
+    }
     switch (columnIndex) {
       case 0:
         return entry.name;
